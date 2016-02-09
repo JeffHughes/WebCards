@@ -1,10 +1,7 @@
 ﻿<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
-<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/i18n/jquery-ui-i18n.min.js"></script>-->
-
 <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
-
 <script src="https://jsvscs.azurewebsites.net/js/viewportchangedetectionshim.js"></script>
-<link rel="import" href="/lib/polymer/polymer.html" />
+<link rel="import" href="//jswebcards.azurewebsites.net/lib/polymer/polymer.html" />
 
 <dom-module id="web-card">
     <style>
@@ -91,6 +88,13 @@
         });
     }
 
+    function DebounceCheckCardLocation() {
+        $.globalQueue.clearQueue();
+        clearTimeout($.CheckCardLocationHandle);
+        clearTimeout($.MoveAnimationHandle);
+        $.CheckCardLocationHandle = setTimeout(CheckCardLocation, 500);
+    }
+
     Polymer({
         is: 'web-card',
         properties: {
@@ -110,17 +114,16 @@
         resizeCard: function () {
             this.cardHeight = $(window).height() - 2;
             $(".web-card-background").innerHeight(this.cardHeight);
+            DebounceCheckCardLocation();
             //console.log("cardHeight: " + this.cardHeight);
         },
         CheckCardLocation: function checkCardView() {
-            $.globalQueue.clearQueue();
-            clearTimeout($.CheckCardLocationHandle);
-            clearTimeout($.MoveAnimationHandle);
-            $.CheckCardLocationHandle = setTimeout(CheckCardLocation, 500);
+            DebounceCheckCardLocation();
         },
         ready: function () {
             //console.log("start: id=" + this.id + " ID: " + this.ID);
             this.resizeCard();
+            this.CheckCardLocation();
             $("#" + this.id + " .tog-margin-spacer").innerHeight(this.topmargin);
             $(document).on("HeightChanged", this.resizeCard);
             $(document).on("ScrollPositionChanged", this.CheckCardLocation);
