@@ -1,0 +1,129 @@
+﻿<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/i18n/jquery-ui-i18n.min.js"></script>-->
+
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
+
+<script src="https://jsvscs.azurewebsites.net/js/viewportchangedetectionshim.js"></script>
+<link rel="import" href="/lib/polymer/polymer.html" />
+
+<dom-module id="web-card">
+    <style>
+    </style>
+    <template>
+        <div class="web-card-background">
+            <div class="tog-margin-spacer"></div>
+            <content></content>
+        </div>
+    </template>
+</dom-module>
+<script>
+
+    $.globalQueue = {
+        queue: function (anim) {
+            $('body')
+              .queue(function (dequeue) {
+                  anim()
+                    .queue(function (innerDequeue) {
+                        dequeue();
+                        innerDequeue();
+                    });
+              });
+            return this;
+        },
+        clearQueue: function () {
+            $('body').clearQueue();
+        }
+    };
+
+    function percentageVisible(ele) {
+        if (ele === undefined) return 0;
+
+        var viewportHeight = $(window).height(),
+            scrollTop = $(window).scrollTop(),
+            elementOffsetTop = $(ele).offset().top,
+            elementHeight = $(ele).height(),
+            visibleElementHeight = elementHeight;
+
+        if (elementOffsetTop < scrollTop) {
+            var topmargin = scrollTop - elementOffsetTop;
+
+            if (topmargin > elementHeight)
+                topmargin = elementHeight;
+
+            visibleElementHeight -= topmargin;
+        }
+
+        if ((elementOffsetTop + elementHeight) > (scrollTop + viewportHeight)) {
+            var subtractFromBottom = (elementOffsetTop + elementHeight) - (scrollTop + viewportHeight);
+
+            if (subtractFromBottom > elementHeight)
+                subtractFromBottom = elementHeight;
+
+            visibleElementHeight -= subtractFromBottom;
+        }
+        var result = visibleElementHeight / elementHeight * 100;
+        //console.log("ele height: " + $(ele).height() + " = " + result + "%");
+        return result;
+    }
+
+    $.MoveAnimationHandle = null;
+    $.CheckCardLocationHandle = null;
+
+    var animationTime = 1000;
+
+    function AnimateMoveToCard(value) {
+        //console.log("AnimateMoveToCard for: " + Math.round($(value).offset().top));
+        $.globalQueue.clearQueue();
+        $.globalQueue.queue(function () {
+            return $('html, body').animate({
+                scrollTop: $(value).offset().top
+            }, animationTime, 'easeOutBounce');
+        });
+    }
+
+    function CheckCardLocation() {
+        $(".web-card-background").each(function (index, value) {
+            var visible = percentageVisible(value);
+            if (visible > 50 && visible < 100) {
+                clearTimeout($.MoveAnimationHandle);
+                $.MoveAnimationHandle = setTimeout(AnimateMoveToCard, (animationTime + 100), value);
+            }
+        });
+    }
+
+    Polymer({
+        is: 'web-card',
+        properties: {
+            topmargin: {
+                type: Number,
+                value: 0,
+                reflectToAttribute: true,
+                notify: true
+            },
+            cardHeight: {
+                type: Number,
+                value: 0,
+                reflectToAttribute: true,
+                notify: true
+            }
+        },
+        resizeCard: function () {
+            this.cardHeight = $(window).height() - 2;
+            $(".web-card-background").innerHeight(this.cardHeight);
+            //console.log("cardHeight: " + this.cardHeight);
+        },
+        CheckCardLocation: function checkCardView() {
+            $.globalQueue.clearQueue();
+            clearTimeout($.CheckCardLocationHandle);
+            clearTimeout($.MoveAnimationHandle);
+            $.CheckCardLocationHandle = setTimeout(CheckCardLocation, 500);
+        },
+        ready: function () {
+            //console.log("start: id=" + this.id + " ID: " + this.ID);
+            this.resizeCard();
+            $("#" + this.id + " .tog-margin-spacer").innerHeight(this.topmargin);
+            $(document).on("HeightChanged", this.resizeCard);
+            $(document).on("ScrollPositionChanged", this.CheckCardLocation);
+        }
+    });
+</script>
