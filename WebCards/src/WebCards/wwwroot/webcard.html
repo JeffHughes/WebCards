@@ -1,18 +1,38 @@
-﻿<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
-<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
-<script src="https://jsvscs.azurewebsites.net/js/viewportchangedetectionshim.js"></script>
-<link rel="import" href="//jswebcards.azurewebsites.net/lib/polymer/polymer.html" />
+﻿<link rel="import" href="//jswebcards.azurewebsites.net/lib/polymer/polymer.html" />
 
 <dom-module id="web-card">
     <style>
+        .web-card-background {
+            position: relative;
+            -webkit-transform-style: preserve-3d;
+            -moz-transform-style: preserve-3d;
+            transform-style: preserve-3d;
+        }
+
+        .web-card-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -moz-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+            -o-transform: translate(-50%, -50%);
+            -webkit-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
     </style>
     <template>
         <div class="web-card-background">
             <div class="tog-margin-spacer"></div>
-            <content></content>
+            <div class="web-card-content"><content></content></div>
         </div>
     </template>
 </dom-module>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
+<script src="//jsvscs.azurewebsites.net/js/viewportchangedetectionshim.js"></script>
+<script src="http://localhost:52545/js/oar.js"></script>
+<!--<script src="//orientationawarerestraints.azurewebsites.net/js/oar.js"></script>-->
 <script>
 
     $.globalQueue = {
@@ -114,8 +134,14 @@
         resizeCard: function () {
             this.cardHeight = $(window).height() - 2;
             $(".web-card-background").innerHeight(this.cardHeight);
+            $(".web-card-background").parent().innerHeight(this.cardHeight);
+
+            $(".web-card-background").attr("height", this.cardHeight);
+            $(".web-card-background").parent().attr("height", this.cardHeight);
+
             DebounceCheckCardLocation();
             //console.log("cardHeight: " + this.cardHeight);
+
         },
         CheckCardLocation: function checkCardView() {
             DebounceCheckCardLocation();
@@ -124,9 +150,14 @@
             //console.log("start: id=" + this.id + " ID: " + this.ID);
             this.resizeCard();
             this.CheckCardLocation();
-            $("#" + this.id + " .tog-margin-spacer").innerHeight(this.topmargin);
+
+            if (this.topmargin === 0)
+                $("#" + this.id + " .tog-margin-spacer").hide();
+            else
+                $("#" + this.id + " .tog-margin-spacer").innerHeight(this.topmargin);
             $(document).on("HeightChanged", this.resizeCard);
             $(document).on("ScrollPositionChanged", this.CheckCardLocation);
+
         }
     });
 </script>
